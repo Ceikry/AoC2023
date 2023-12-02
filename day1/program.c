@@ -119,7 +119,7 @@ char chkStr (char string[]) {
     }
     return PARSEBUG;
 }
-
+                                                                                                                     
 void insertChar (char* backing, int backingSize, char value) {
     for (int i = 0; i < backingSize; i++) {
         if (i == backingSize - 1) {
