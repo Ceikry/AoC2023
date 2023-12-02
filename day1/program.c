@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define PARSEBUG    '\0'
 #define LOOKUPNUM   10
@@ -21,18 +22,36 @@ static t_lookup lookupTable[] = {
     { "nine",   '9' }
 };
 
+static bool partTwo = true;
+static bool verbose = false;
+
 int procLn (char ln[], int numChars);
 char chkStr (char string[]);
 void insertChar (char* backing, int backingSize, char value);
 
-int main (void) {
+int main (int argc, char* argv[]) {
     FILE *fp;
     char *buff = NULL;
     size_t buff_size = 128;
 
     size_t read;
 
-    fp = fopen ("input.txt", "r");
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "-1") == 0)
+            partTwo = false;
+        else if (strcmp(argv[i], "-v") == 0)
+            verbose = true;
+        else if (fp == NULL && strstr(argv[i], ".txt") != NULL) {
+            printf ("Using file: %s\n", argv[i]);
+            fp = fopen (argv[i], "r");
+        }
+    }
+
+    if (fp == NULL) {
+        printf ("No file passed, trying input.txt in current folder.\n");
+        fp = fopen ("input.txt", "r");
+    }
+
     if (fp == NULL)
             exit (EXIT_FAILURE);
 
@@ -41,10 +60,15 @@ int main (void) {
     {
         if (read == -1) break;
         buff[read - 1] = '\0';
-        printf("Read %d chars -> '%s'\n", read, buff);
+        if (verbose)
+            printf("Read %d chars -> '%s'\n", read, buff);
         _sum += procLn (buff, read);
-        printf("Total = %d\n", _sum);
+        if (verbose)
+            printf("Total = %d\n", _sum);
     }
+
+    if (!verbose)
+        printf ("Total = %d\n", _sum);
 }
 
 int procLn (char ln[], int numChars) {
@@ -52,8 +76,12 @@ int procLn (char ln[], int numChars) {
     char curStr[5] = {[0 ... 4] = ' '};
 
     for (int i = 0; i < numChars; i++) {
-        insertChar (curStr, 5, ln[i]);
-        char thisNum = chkStr (curStr);
+        char thisNum;
+
+        if (partTwo) {
+            insertChar (curStr, 5, ln[i]);
+            thisNum = chkStr (curStr);
+        } else thisNum = PARSEBUG;
 
         if (thisNum == PARSEBUG) {
             if (ln[i] < '0' || ln[i] > '9') {
@@ -67,7 +95,8 @@ int procLn (char ln[], int numChars) {
         nums[1] = thisNum;
     }
 
-    printf ("I think this is right -> %s\n", nums);
+    if (verbose)
+        printf ("I think this is right -> %s\n", nums);
     return atoi (nums);
 }
 
@@ -75,13 +104,15 @@ char chkStr (char string[]) {
     t_lookup *opt;
     char* result;
 
-    printf("Checking: %s\n", string);
+    if (verbose)
+        printf("Checking: %s\n", string);
 
     for (int i = 0; i < LOOKUPNUM; i++) {
         opt = lookupTable + i;
         result = strstr(string, opt->key);
         if (result != NULL) {
-            printf("Found: %s\n", opt->key);
+            if (verbose)
+                printf("Found: %s\n", opt->key);
             *result = '0';
             return opt->val;
         }
