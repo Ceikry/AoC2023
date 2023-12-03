@@ -16,6 +16,7 @@ bool isDigit (char c);
 bool isSym (char c);
 int getNum (char line[], int index);
 int getNumAt (char *line[], int x, int y);
+int findNums (char *lines[], int *foundNums, int x, int y);
 
 int main (int argc, char* argv[])
 {
@@ -140,6 +141,7 @@ int getNum (char line[], int index)
 
 int procLn (char *lines[], bool first) 
 {
+    int foundNums[8] = {0};
     int symbolIndices[3][32] = {{0}};
     int symIndex[3] = {0};
     int sum = 0;
@@ -167,11 +169,10 @@ int procLn (char *lines[], bool first)
     {
         if (verbose)
             printf ("Line %d:\n", ln + 1);
+
         for (int i = 0; i < symIndex[ln]; i++)
         {
             int symIndex = symbolIndices[ln][i];
-            int foundNums[8] = {0};
-            int ni = 0;
 
             if (verbose)
                 printf ("symindex: %03d -> ", symIndex);
@@ -179,52 +180,24 @@ int procLn (char *lines[], bool first)
             if (verbose)
                 printf ("%c nums:", lines[ln][symIndex]);
             
-            int _lastNum = 0;
-            for (int i = 0; i < 9; i++) 
+            int numFound = findNums (lines, foundNums, symIndex, ln);
+
+            if (partTwo)
             {
-                int xMod = (i % 3) - 1;
-                int yMod = (i / 3) - 1;
-
-                if (xMod == 0 && yMod == 0)
-                    continue;
-
-                if (ln == 0 && !first && yMod == 0)
-                    continue;
-
-                int num = getNumAt(lines, symIndex + xMod, ln + yMod);
-                if (partTwo && num == _lastNum)
-                    continue;
-
-                if (num != -1)
-                    foundNums[ni++] = num;
-                _lastNum = num;
-            }
-
-            if (partTwo && ni != 2)
-            {
-                if (verbose)
-                    printf ("\n");
-               continue;
-            }
-            else if (partTwo)
-                lines[ln][symIndex] = '.';
-
-            int lineSum = 0;
-            for (int i = 0; i < ni; i++) 
-            {
-                if (foundNums[i] == -1) continue;
-
-                if (partTwo)
+                if (numFound != 2)
                 {
-                    if (lineSum == 0)
-                        lineSum = foundNums[i];
-                    else
-                        lineSum *= foundNums[i];
+                    if (verbose)
+                        printf ("\n");
+                   continue;
                 }
-                else
-                    lineSum += foundNums[i];
+                lines[ln][symIndex] = '.';
+                sum += foundNums[0] * foundNums[1];
             }
-            sum += lineSum;
+            else
+            {
+                for (int i = 0; i < numFound; i++) 
+                    sum += foundNums[i];
+            }
 
             if (verbose)
                 printf ("\n");
@@ -247,4 +220,35 @@ int getNumAt (char *lines[], int x, int y) {
         return getNum (lines[y], x);
 
     return -1;
+}
+
+int findNums (char *lines[], int *foundNums, int x, int y)
+{
+    int _lastNum = 0;
+    int ni = 0;
+
+    for (int i = 0; i < 9; i++) 
+    {
+        int xMod = (i % 3) - 1;
+        int yMod = (i / 3) - 1;
+
+        if (xMod == 0 && yMod == 0)
+            continue;
+
+        if (y == 0 && !firstSet && yMod == 0)
+            continue;
+
+        int num = getNumAt(lines, x + xMod, y + yMod);
+        if (partTwo && num == _lastNum)
+            continue;
+
+        if (num != -1)
+            foundNums[ni++] = num;
+        _lastNum = num;
+    }
+
+    for (int i = ni; i < 8; i++)
+        foundNums[i] = -1;
+
+    return ni;
 }
